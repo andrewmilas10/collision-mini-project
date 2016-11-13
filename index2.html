@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Collision</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script>
+        var a;
+        var a2;
+        var a3;
+
+        getImage =  function(src){
+           var img = new Image();
+            img.src = src;
+            return img;
+        };
+        var state = {
+            points: 0,
+            canFly:false,
+            canPotion: false,
+            canDoor: false,
+
+            pict: {
+                potion: {
+                    src: "resources/potion.png",
+                    info: [50, 490, 49.855, 80],
+                    img: getImage(state.pict.potion.src)
+                },
+                man: {
+                    src: "Resources/man.png",
+                    info: [500, 470, 38.071, 100],
+                    img: getImage(state.pict.man.src)
+                },
+                door: {
+                    src: "Resources/door(2).png",
+                    info: [-300, 441, 145, 129],
+                    img: getImage(state.pict.door.src)
+                }
+            },
+
+            coinsAll: {
+                coins: [new Image, new Image, new Image, new Image, new Image],
+                infos: [[200, 200, 30, 36], [200, 250, 30, 36], [390, 250, 30, 36], [580, 200, 30, 36], [580, 250, 30, 36]],
+                amountX: [7, -13, 0, -8, 7],
+                amountY: [-7, -10, 0, -8, 11],
+                keepDrawing: [true, true, true, true, true]
+            }
+        };
+
+        for (i=0; i<5; i++) {
+            state.coinsAll.coins[i].src="resources/Coin.png"
+        }
+
+        function initialize() {
+            drawBackground();
+            drawPict(state.pict.man, pictInfo2);
+            drawPict(pict, pictInfo);
+            animatePotionAndDoors();
+        }
+
+        function stopAnimation1() {
+            cancelAnimationFrame(a);
+        }
+
+        function stopAnimation2() {
+            cancelAnimationFrame(a2);
+        }
+
+        function stopAnimation2() {
+            cancelAnimationFrame(a3);
+        }
+
+
+
+        function animatePotionAndDoors(pict) {
+            a = requestAnimationFrame(animatePotionAndDoors);
+            drawBackground();
+            drawPict(pict, doorInfo);
+            drawPict(pict2, pictInfo2);
+            drawPict(pict, pictInfo);
+            if (checkCollision(pictInfo, pictInfo2)) {
+                canPotion=true;
+                drawText("Press e to pick up the potion.");
+            }
+            else {
+                canPotion=false;
+            }
+
+            if (checkCollision(doorInfo, pictInfo2)) {
+                canDoor = true;
+                drawText("Press e to open the door.");
+            }
+            else if (points === 5) {
+                drawText("Good Job, you are ready for the second and final stage of the trial.")
+                canDoor = false;
+            }
+        }
+
+        function animateCoins() {
+            var a2 = requestAnimationFrame(animateCoins);
+            drawBackground();
+            drawPict(pict2, pictInfo2);
+            for (i = 0; i < 5; i++) {
+                if (keepDrawing[i]) {
+                    drawCoin(coins[i], coinInfos[i], coinAmountX[i], coinAmountY[i]);
+                    checkMovingCollision(i);
+                    if (checkCollision(coinInfos[i], pictInfo2)) {
+                        points += 1;
+                        keepDrawing[i]=false;
+                        coinInfos[i][0]=-300;
+                    }
+                    drawText("Coins collected "+points+"/5.")
+                }
+            }
+            if (points===5) {
+                drawText("Good Job, you are ready for the final stage of the trial.");
+                doorInfo[0]=327.5;
+                stopAnimation2();
+                animatePotionAndDoors();
+            }
+        }
+
+        function animateFireballs() {
+            var a3 = requestAnimationFrame(animateFireballs);
+            drawBackground();
+            drawPict(pict2, pictInfo2);
+            drawText("Avoid the fireballs for 15 seconds.")
+        }
+
+        function drawBackground() {
+            var ctx=document.getElementById('myCanvas').getContext("2d");
+            ctx.fillStyle='#00EEFF';
+            ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+            drawGrass();
+//            drawText();
+        }
+
+        function drawCoin(coin, coinInfo, coinChangeX, coinChangeY) {
+            var ctx=document.getElementById('myCanvas').getContext("2d");
+            coinInfo[0] += coinChangeX;
+            coinInfo[1] += coinChangeY;
+            ctx.drawImage(coin, coinInfo[0], coinInfo[1], coinInfo[2], coinInfo[3])
+        }
+
+        function drawPict(pictName, pictInformation) {
+            var ctx=document.getElementById('myCanvas').getContext("2d");
+            ctx.drawImage(pictName, pictInformation[0], pictInformation[1], pictInformation[2], pictInformation[3])
+        }
+
+        function checkMovingCollision(index) {
+            if ((coinInfos[index][0]+coinInfos[index][2]>=800)||(coinInfos[index][0]<=0)) {
+                coinAmountX[index]*=-1;
+            }
+            if ((coinInfos[index][1]<=0)||(coinInfos[index][1]+coinInfos[index][3]>=600)) {
+                coinAmountY[index]*=-1;
+            }
+        }
+
+        function checkCollision(pictureInfo, pictureInfo2) {
+            if (pictureInfo[0]+pictureInfo[2]>=pictureInfo2[0]&&pictureInfo[0]<pictureInfo2[0]+pictureInfo2[2]&&
+                    pictureInfo[1]+pictureInfo[3]>=pictureInfo2[1]&&pictureInfo[1]<pictureInfo2[1]+pictureInfo2[3]) {
+                return(true);
+            }
+            return(false);
+        }
+
+        $(document).keydown(function(event){  //jQuery code to recognize a keydown event
+            var keycode = (event.keyCode ? event.keyCode : event.which);
+
+            if(keycode == 87 && canFly && pictInfo2[1]>=10) {
+                pictInfo2[1]-=10;
+            }
+
+            if(keycode == 69 && canPotion) {
+                canFly=true;
+                pict2.src="Resources/FlyingMan.png";
+                pictInfo2[2]=77.1574;
+                pictInfo2[0]-=21;
+                pictInfo[0]=-300;
+                stopAnimation1();
+                animateCoins()
+            }
+
+            if(keycode == 69 && canDoor) {
+                doorInfo[0]=-300;
+                stopAnimation1();
+                animateFireballs();
+            }
+
+            if(keycode == 65 && pictInfo2[0]>=10) {
+                pictInfo2[0]-=10;
+            }
+
+            if(keycode == 68 && pictInfo2[0]+pictInfo2[2]<=790)  {
+                pictInfo2[0]+=10;
+            }
+
+            if(keycode == 83 && canFly && pictInfo2[1]+pictInfo2[3]<=560) {
+                pictInfo2[1]+=10;
+            }
+        });
+
+        function drawText(text) {
+            var ctx=document.getElementById('myCanvas').getContext("2d");
+            ctx.fillStyle= "#000000";
+            ctx.font = "25px Arial";
+            ctx.fillText(text, 30, 50);
+        }
+
+        function drawGrass() {
+            drawRects('00ff00', '00ff00', 0, 570, 800, 30);
+        }
+
+        //draws a rectangle given its color, border color, top-left corner coordinates, width, and height
+        function drawRects(color, outlineColor, startX, startY, width, height){
+            var ctx = document.getElementById("myCanvas").getContext("2d");
+            ctx.fillStyle = "#"+color;
+            ctx.fillRect( startX, startY, width, height);
+            ctx.fillRect( startX, startY, width, height);
+            ctx.strokeStyle = "#"+outlineColor;
+            ctx.strokeRect( startX, startY, width, height);
+        }
+
+</script>
+</head>
+
+<body onload="initialize()">
+<canvas id="myCanvas" width="800" height="600"
+        style="border:1px solid #000000;">
+</canvas>
+<!--<button type="button" onclick="startAnimation()">start animation</button>-->
+<!--<button type="button" onclick="stopAnimation()">stop animation</button>-->
+</body>
+</html>
